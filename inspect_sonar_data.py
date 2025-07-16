@@ -23,7 +23,7 @@ import zlib
 import math
 
 # Generated Protobuf definitions for the Sonar 3D-15 protocol
-from sonar_3d_15_protocol_pb2 import (
+from .sonar_3d_15_protocol_pb2 import (
     Packet,
     BitmapImageGreyscale8,
     RangeImage
@@ -183,13 +183,13 @@ def handle_packet(data: bytes, save: bool = False, save_path: str = ""):
     # Parse the RIP1 framing to get the Protobuf payload
     payload = parse_rip1_packet(data)
     if payload is None:
-        return  # skip invalid packets
+        return None # skip invalid packets
 
     # Decode the Protobuf message
     result = decode_protobuf_packet(payload)
     if not result:
         # Did not get a valid message
-        return
+        return None
 
     msg_type, msg_obj = result
     #print(f"Received '{msg_type}' from {addr}")
@@ -213,6 +213,7 @@ def handle_packet(data: bytes, save: bool = False, save_path: str = ""):
             filename = f"sonar_image_{seq_id}.pgm"
             file_path = os.path.join(save_path, filename)
             saveImage(msg_obj, file_path)
+        return (msg_type, msg_obj, None)
 
     elif msg_type == "RangeImage":
         # Print out main fields
@@ -236,6 +237,7 @@ def handle_packet(data: bytes, save: bool = False, save_path: str = ""):
             filename = f"sonar_voxels_{seq_id}.xyz"
             file_path = os.path.join(save_path, filename)
             saveXYZ(voxels, file_path)
+        return (msg_type, msg_obj, voxels)
 
     else:
         # We don't have a custom handler for other message types
